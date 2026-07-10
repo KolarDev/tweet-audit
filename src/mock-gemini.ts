@@ -1,12 +1,10 @@
 import { AIClient, AnalysisResult } from "./ai";
 
 export class MockGeminiClient implements AIClient {
-  async analyzeTweet(tweet: string): Promise<AnalysisResult> {
-    const lower = tweet.toLowerCase();
-
+  async analyze(_: string): Promise<AnalysisResult> {
     return {
-      flag: lower.includes("bitcoin") || lower.includes("crypto"),
-      reason: "Mock analysis"
+      flag: Math.random() > 0.5,
+      reason: "Mock response",
     };
   }
 }

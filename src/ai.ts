@@ -4,5 +4,5 @@ export interface AnalysisResult {
 }
 
 export interface AIClient {
-  analyzeTweet(tweet: string): Promise<AnalysisResult>;
+  analyze(prompt: string): Promise<AnalysisResult>;
 }

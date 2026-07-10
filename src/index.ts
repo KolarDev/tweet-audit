@@ -2,33 +2,40 @@ import "dotenv/config";
 
 import { GeminiClient } from "./gemini";
 import { MockGeminiClient } from "./mock-gemini";
+
 import { ArchiveParser } from "./parser/archive-parser";
-import { writeFlaggedTweet } from "./writer";
+import { ConfigLoader } from "./config/config-loader";
+import { PromptBuilder } from "./config/prompt-builder";
 
 const USE_MOCK = true;
 
-const ai = USE_MOCK
-  ? new MockGeminiClient()
-  : new GeminiClient();
-
-const parser = new ArchiveParser();
-
 async function main() {
+  const config = await new ConfigLoader().load();
+
+  const parser = new ArchiveParser();
+
+  const ai = USE_MOCK
+    ? new MockGeminiClient()
+    : new GeminiClient();
+
+  const promptBuilder = new PromptBuilder();
+
   const tweets = await parser.loadTweets();
 
   console.log(`Loaded ${tweets.length} tweets`);
-  console.log(tweets.slice(0, 5));
 
-  // for (const tweet of tweets) {
-  //   const analysis = await ai.analyzeTweet(tweet.text);
+  for (const tweet of tweets) {
+    const prompt = promptBuilder.build(tweet.text, config);
 
-  //   if (analysis.flag) {
-  //     writeFlaggedTweet(tweet.url);
-  //   }
+    const analysis = await ai.analyze(prompt);
 
-  //   console.log(tweet.id);
-  //   console.log(analysis);
-  // }
+    console.log({
+      id: tweet.id,
+      analysis,
+    });
+
+    // We'll move this into AuditProcessor in Stage 4
+  }
 }
 
 main();
