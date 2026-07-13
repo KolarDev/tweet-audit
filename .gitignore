@@ -4,7 +4,7 @@ node_modules/
 dist
 
 archive/
-
 flagged.csv
+*.csv
 
 checkpoint.json
