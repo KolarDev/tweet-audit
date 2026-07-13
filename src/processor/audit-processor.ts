@@ -28,22 +28,33 @@ export class AuditProcessor {
     console.log(`Loaded ${tweets.length} tweets`);
 
     for (const tweet of tweets) {
-      const prompt = this.promptBuilder.build(
-        tweet.text,
-        this.config
-      );
+      try {
+        const prompt = this.promptBuilder.build(
+          tweet.text,
+          this.config
+        );
 
-      const analysis = await this.ai.analyze(prompt);
+        const analysis = await this.ai.analyze(prompt);
 
-      if (analysis.flag) {
-        await this.writer.write(this.toFlaggedTweet(tweet));
+        if (analysis.flag) {
+          await this.writer.write(
+            this.toFlaggedTweet(tweet)
+          );
+        }
+
+        console.info({
+          id: tweet.id,
+          flagged: analysis.flag,
+          reason: analysis.reason,
+        });
+      } catch (error) {
+        console.error(
+          `Failed to process tweet ${tweet.id}:`,
+          error
+        );
+
+        continue;
       }
-
-      console.log({
-        id: tweet.id,
-        flagged: analysis.flag,
-        reason: analysis.reason,
-      });
     }
   }
 }

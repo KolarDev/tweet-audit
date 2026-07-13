@@ -1,35 +1,42 @@
 import fs from "node:fs/promises";
 
 import { PATHS } from "../config/paths";
+import {
+  ArchiveNotFoundError,
+  InvalidArchiveError,
+} from "../errors/archive-errors";
 import { ArchiveTweet } from "../types/archive-tweet";
 import { Tweet } from "../types/tweet";
 
 export class ArchiveParser {
-
-  private async ensureArchiveExists() {
-      try {
-          await fs.access(PATHS.tweets);
-      } catch {
-          throw new Error(
-              `Could not find X archive.
-              Expected: ${PATHS.tweets}
-              Extract your X archive into the project's archive folder.`
-          );
-      }
+  private async ensureArchiveExists(): Promise<void> {
+    try {
+      await fs.access(PATHS.tweets);
+    } catch {
+      throw new ArchiveNotFoundError(PATHS.tweets);
+    }
   }
+
   async loadTweets(): Promise<Tweet[]> {
     await this.ensureArchiveExists();
+
     const file = await fs.readFile(PATHS.tweets, "utf8");
 
     const equalIndex = file.indexOf("=");
 
     if (equalIndex === -1) {
-      throw new Error("Invalid Twitter archive.");
+      throw new InvalidArchiveError();
     }
 
     const json = file.substring(equalIndex + 1).trim();
 
-    const archiveTweets: ArchiveTweet[] = JSON.parse(json);
+    let archiveTweets: ArchiveTweet[];
+
+    try {
+      archiveTweets = JSON.parse(json);
+    } catch {
+      throw new InvalidArchiveError();
+    }
 
     return archiveTweets.map(({ tweet }) => ({
       id: tweet.id,

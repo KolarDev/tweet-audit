@@ -9,23 +9,34 @@ import { MockGeminiClient } from "./mock-gemini";
 import { ArchiveParser } from "./parser/archive-parser";
 import { AuditProcessor } from "./processor/audit-processor";
 import { CsvWriter } from "./writer/csv-writer";
+import { AppError } from "./errors/app-error";
 
 const USE_MOCK = true;
 
 async function main() {
-  const config = await new ConfigLoader().load();
+  try {
+    const config = await new ConfigLoader().load();
 
-  const processor = new AuditProcessor(
-    new ArchiveParser(),
-    new PromptBuilder(),
-    USE_MOCK
-      ? new MockGeminiClient()
-      : new GeminiClient(),
-    new CsvWriter(),
-    config
-  );
+    const processor = new AuditProcessor(
+      new ArchiveParser(),
+      new PromptBuilder(),
+      USE_MOCK
+        ? new MockGeminiClient()
+        : new GeminiClient(),
+      new CsvWriter(),
+      config
+    );
 
-  await processor.run();
+    await processor.run();
+  } catch (error) {
+    if (error instanceof AppError) {
+      console.error(error.message);
+      process.exit(1);
+    }
+
+    console.error("Unexpected error:", error);
+    process.exit(1);
+  }
 }
 
 main();

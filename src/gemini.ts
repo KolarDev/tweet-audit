@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { AIClient, AnalysisResult } from "./ai";
+import { InvalidGeminiResponseError } from "./errors/gemini-errors";
 
 export class GeminiClient implements AIClient {
   private readonly ai: GoogleGenAI;
@@ -16,6 +17,10 @@ export class GeminiClient implements AIClient {
       contents: prompt,
     });
 
-    return JSON.parse(response.text!);
+    try {
+      return JSON.parse(response.text!);
+    } catch {
+      throw new InvalidGeminiResponseError();
+    }
   }
 }

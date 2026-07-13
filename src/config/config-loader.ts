@@ -1,11 +1,26 @@
 import fs from "node:fs/promises";
 
+import {
+  ConfigNotFoundError,
+  InvalidConfigError,
+} from "../errors/config-errors";
+
 import { AuditConfig } from "../types/config";
 
 export class ConfigLoader {
   async load(path = "config.json"): Promise<AuditConfig> {
-    const file = await fs.readFile(path, "utf8");
+    let file: string;
 
-    return JSON.parse(file);
+    try {
+      file = await fs.readFile(path, "utf8");
+    } catch {
+      throw new ConfigNotFoundError(path);
+    }
+
+    try {
+      return JSON.parse(file);
+    } catch {
+      throw new InvalidConfigError();
+    }
   }
 }
