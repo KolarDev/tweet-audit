@@ -10,6 +10,7 @@ import { ArchiveParser } from "./parser/archive-parser";
 import { AuditProcessor } from "./processor/audit-processor";
 import { CsvWriter } from "./writer/csv-writer";
 import { AppError } from "./errors/app-error";
+import { ConsoleLogger } from "./logger/console-logger";
 
 const USE_MOCK = true;
 
@@ -24,7 +25,8 @@ async function main() {
         ? new MockGeminiClient()
         : new GeminiClient(),
       new CsvWriter(),
-      config
+      config,
+      new ConsoleLogger()
     );
 
     await processor.run();
