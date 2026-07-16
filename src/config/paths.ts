@@ -4,4 +4,5 @@ export const PATHS = {
   archive: path.resolve("archive"),
   tweets: path.resolve("archive/data/tweets.js"),
   output: path.resolve("flagged.csv"),
+  checkpoint: path.resolve("checkpoint.json"),
 };

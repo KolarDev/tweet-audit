@@ -9,6 +9,7 @@ import { MockGeminiClient } from "./mock-gemini";
 import { ArchiveParser } from "./parser/archive-parser";
 import { AuditProcessor } from "./processor/audit-processor";
 import { CsvWriter } from "./writer/csv-writer";
+import { CheckpointStore } from "./checkpoint/checkpoint-store";
 import { AppError } from "./errors/app-error";
 import { ConsoleLogger } from "./logger/console-logger";
 
@@ -25,9 +26,32 @@ async function main() {
         ? new MockGeminiClient()
         : new GeminiClient(),
       new CsvWriter(),
+      new CheckpointStore(),
       config,
       new ConsoleLogger()
     );
+
+    let shuttingDown = false;
+
+    async function gracefulShutdown(signal: string) {
+      if (shuttingDown) return;
+
+      shuttingDown = true;
+
+      console.log(`\nReceived ${signal}`);
+
+      await processor.shutdown();
+
+      process.exit(0);
+    }
+
+    process.on("SIGINT", () => {
+      void gracefulShutdown("SIGINT");
+    });
+
+    process.on("SIGTERM", () => {
+      void gracefulShutdown("SIGTERM");
+    });
 
     await processor.run();
   } catch (error) {
