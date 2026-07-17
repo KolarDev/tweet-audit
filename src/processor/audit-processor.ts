@@ -2,6 +2,7 @@ import { AIClient } from "../ai";
 import { CheckpointStore } from "../checkpoint/checkpoint-store";
 import { PromptBuilder } from "../config/prompt-builder";
 import { Logger } from "../logger/logger";
+import { RateLimiter } from "../limiter/rate-limiter";
 import { ArchiveParser } from "../parser/archive-parser";
 import { AuditConfig } from "../types/config";
 import { FlaggedTweet } from "../types/flagged-tweet";
@@ -16,6 +17,9 @@ export class AuditProcessor {
     flagged: 0,
     failed: 0,
   };
+
+  private readonly checkpointInterval = 25;
+  private readonly rateLimiter = new RateLimiter(500);
 
   private currentIndex = 0;
   private completed = false;
@@ -50,9 +54,7 @@ export class AuditProcessor {
   }
 
   async shutdown(): Promise<void> {
-    if (this.completed) {
-      return;
-    }
+    if (this.completed) return;
 
     this.logger.warn(
       "Shutdown requested. Saving checkpoint..."
@@ -60,7 +62,6 @@ export class AuditProcessor {
 
     try {
       await this.saveCheckpoint();
-
       this.logger.info(
         "Checkpoint saved successfully."
       );
@@ -68,7 +69,6 @@ export class AuditProcessor {
       this.logger.error(
         "Failed to save checkpoint during shutdown."
       );
-
       this.logger.error(String(error));
     }
   }
@@ -91,10 +91,8 @@ export class AuditProcessor {
 
       this.stats.processed =
         checkpoint.stats.processed;
-
       this.stats.flagged =
         checkpoint.stats.flagged;
-
       this.stats.failed =
         checkpoint.stats.failed;
 
@@ -109,20 +107,20 @@ export class AuditProcessor {
       );
     }
 
-    for (
-      let index = startIndex;
-      index < tweets.length;
-      index++
-    ) {
+    for (let index = startIndex; index < tweets.length; index++) {
       const tweet = tweets[index];
 
       this.currentIndex = index;
 
+      const progress = ((index + 1) / tweets.length * 100).toFixed(1);
+
       this.logger.info(
-        `Processing tweet ${index + 1}/${tweets.length}`
+        `[${progress}%] Processing ${index + 1}/${tweets.length} | Flagged: ${this.stats.flagged} | Failed: ${this.stats.failed}`
       );
 
       try {
+        await this.rateLimiter.wait();
+
         const prompt = this.promptBuilder.build(
           tweet.text,
           this.config
@@ -152,14 +150,22 @@ export class AuditProcessor {
           );
         }
 
-        try {
-          await this.saveCheckpoint();
-        } catch (error) {
-          this.logger.warn(
-            "Failed to save checkpoint."
-          );
+        if (
+          this.stats.processed %
+          this.checkpointInterval === 0
+        ) {
+          try {
+            await this.saveCheckpoint();
 
-          this.logger.warn(String(error));
+            this.logger.info(
+              `Checkpoint saved at tweet ${index + 1}`
+            );
+          } catch (error) {
+            this.logger.warn(
+              "Failed to save checkpoint."
+            );
+            this.logger.warn(String(error));
+          }
         }
 
         this.logger.info(
@@ -171,10 +177,7 @@ export class AuditProcessor {
         this.logger.error(
           `Failed to process tweet ${tweet.id}`
         );
-
         this.logger.error(String(error));
-
-        continue;
       }
     }
 

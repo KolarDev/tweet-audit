@@ -3,12 +3,26 @@ import { Logger } from "../logger/logger";
 export interface RetryOptions {
   attempts: number;
   delay: number;
+  maxDelay?: number;
   shouldRetry(error: unknown): boolean;
   logger: Logger;
 }
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function calculateDelay(
+  baseDelay: number,
+  attempt: number,
+  maxDelay: number
+): number {
+  const exponential =
+    baseDelay * Math.pow(2, attempt - 1);
+
+  const capped = Math.min(exponential, maxDelay);
+
+  return Math.floor(Math.random() * capped);
 }
 
 export async function retry<T>(
@@ -18,6 +32,7 @@ export async function retry<T>(
   const {
     attempts,
     delay,
+    maxDelay = 30000,
     shouldRetry,
     logger,
   } = options;
@@ -38,11 +53,14 @@ export async function retry<T>(
         break;
       }
 
-      const waitTime =
-        delay * Math.pow(2, attempt - 1);
+      const waitTime = calculateDelay(
+        delay,
+        attempt,
+        maxDelay
+      );
 
       logger.warn(
-        `Retrying (${attempt}/${attempts}) in ${waitTime}ms...`
+        `Retry ${attempt}/${attempts}. Waiting ${waitTime}ms...`
       );
 
       await sleep(waitTime);

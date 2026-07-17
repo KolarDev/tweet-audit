@@ -5,4 +5,9 @@ export interface AuditConfig {
     excludePolitics: boolean;
     tone: string;
   };
+
+  processing: {
+    requestsPerSecond: number;
+    checkpointInterval: number;
+  };
 }

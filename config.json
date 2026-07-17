@@ -8,5 +8,10 @@
     "professionalCheck": true,
     "excludePolitics": true,
     "tone": "respectful and thoughtful"
+  },
+
+  "processing": {
+    "requestsPerSecond": 20,
+    "checkpointInterval": 50
   }
 }
