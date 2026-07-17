@@ -12,6 +12,6 @@
 
   "processing": {
     "requestsPerSecond": 10,
-    "checkpointInterval": 20
+    "checkpointInterval": 10
   }
 }

@@ -13,7 +13,7 @@ import { CheckpointStore } from "./checkpoint/checkpoint-store";
 import { AppError } from "./errors/app-error";
 import { ConsoleLogger } from "./logger/console-logger";
 
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 async function main() {
   try {
