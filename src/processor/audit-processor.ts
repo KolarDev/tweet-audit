@@ -18,11 +18,9 @@ export class AuditProcessor {
     failed: 0,
   };
 
-  private readonly checkpointInterval = 25;
-  private readonly rateLimiter = new RateLimiter(500);
-
   private currentIndex = 0;
   private completed = false;
+  private readonly rateLimiter: RateLimiter;
 
   constructor(
     private readonly parser: ArchiveParser,
@@ -32,7 +30,11 @@ export class AuditProcessor {
     private readonly checkpointStore: CheckpointStore,
     private readonly config: AuditConfig,
     private readonly logger: Logger
-  ) {}
+  ) {
+    this.rateLimiter = new RateLimiter(
+      this.config.processing.requestsPerSecond
+    );
+  }
 
   private toFlaggedTweet(tweet: Tweet): FlaggedTweet {
     return {
@@ -54,7 +56,9 @@ export class AuditProcessor {
   }
 
   async shutdown(): Promise<void> {
-    if (this.completed) return;
+    if (this.completed) {
+      return;
+    }
 
     this.logger.warn(
       "Shutdown requested. Saving checkpoint..."
@@ -62,6 +66,7 @@ export class AuditProcessor {
 
     try {
       await this.saveCheckpoint();
+
       this.logger.info(
         "Checkpoint saved successfully."
       );
@@ -69,6 +74,7 @@ export class AuditProcessor {
       this.logger.error(
         "Failed to save checkpoint during shutdown."
       );
+
       this.logger.error(String(error));
     }
   }
@@ -91,8 +97,10 @@ export class AuditProcessor {
 
       this.stats.processed =
         checkpoint.stats.processed;
+
       this.stats.flagged =
         checkpoint.stats.flagged;
+
       this.stats.failed =
         checkpoint.stats.failed;
 
@@ -107,16 +115,14 @@ export class AuditProcessor {
       );
     }
 
-    for (let index = startIndex; index < tweets.length; index++) {
+    for (
+      let index = startIndex;
+      index < tweets.length;
+      index++
+    ) {
       const tweet = tweets[index];
 
       this.currentIndex = index;
-
-      const progress = ((index + 1) / tweets.length * 100).toFixed(1);
-
-      this.logger.info(
-        `[${progress}%] Processing ${index + 1}/${tweets.length} | Flagged: ${this.stats.flagged} | Failed: ${this.stats.failed}`
-      );
 
       try {
         await this.rateLimiter.wait();
@@ -144,39 +150,46 @@ export class AuditProcessor {
           );
 
           this.stats.flagged++;
-
-          this.logger.info(
-            `Flagged tweet ${tweet.id}`
-          );
         }
 
         if (
           this.stats.processed %
-          this.checkpointInterval === 0
+          this.config.processing
+            .checkpointInterval ===
+          0
         ) {
           try {
             await this.saveCheckpoint();
 
+            const progress = (
+              ((index + 1) / tweets.length) *
+              100
+            ).toFixed(1);
+
             this.logger.info(
-              `Checkpoint saved at tweet ${index + 1}`
+              [
+                `Status update`,
+                `[${progress}%]`,
+                `Processed: ${this.stats.processed}/${tweets.length}`,
+                `Flagged: ${this.stats.flagged}`,
+                `Failed: ${this.stats.failed}`,
+              ].join(" ")
             );
           } catch (error) {
             this.logger.warn(
               "Failed to save checkpoint."
             );
+
             this.logger.warn(String(error));
           }
         }
-
-        this.logger.info(
-          `Processed tweet ${tweet.id}`
-        );
       } catch (error) {
         this.stats.failed++;
 
         this.logger.error(
           `Failed to process tweet ${tweet.id}`
         );
+
         this.logger.error(String(error));
       }
     }

@@ -11,7 +11,7 @@
   },
 
   "processing": {
-    "requestsPerSecond": 20,
-    "checkpointInterval": 50
+    "requestsPerSecond": 10,
+    "checkpointInterval": 20
   }
 }

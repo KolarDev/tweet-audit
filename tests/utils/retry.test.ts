@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { retry } from "../../src/utils/retry";
 
 const logger = {
@@ -8,6 +8,10 @@ const logger = {
 };
 
 describe("retry()", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("returns immediately when operation succeeds", async () => {
     const operation = vi.fn().mockResolvedValue("hello");
 
@@ -20,6 +24,7 @@ describe("retry()", () => {
 
     expect(result).toBe("hello");
     expect(operation).toHaveBeenCalledTimes(1);
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 
   it("retries until success", async () => {
@@ -37,6 +42,7 @@ describe("retry()", () => {
 
     expect(result).toBe("done");
     expect(operation).toHaveBeenCalledTimes(2);
+    expect(logger.warn).toHaveBeenCalledTimes(1);
   });
 
   it("does not retry unrecoverable errors", async () => {
@@ -54,5 +60,6 @@ describe("retry()", () => {
     ).rejects.toThrow("bad");
 
     expect(operation).toHaveBeenCalledTimes(1);
+    expect(logger.warn).not.toHaveBeenCalled();
   });
 });

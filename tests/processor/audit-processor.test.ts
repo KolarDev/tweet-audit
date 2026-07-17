@@ -11,6 +11,10 @@ describe("AuditProcessor", () => {
       excludePolitics: false,
       tone: "professional",
     },
+    processing: {
+      requestsPerSecond: 100000,
+      checkpointInterval: 1,
+    },
   };
 
   function createDependencies(flag = true) {
@@ -72,8 +76,7 @@ describe("AuditProcessor", () => {
 
     await processor.run();
 
-    expect(deps.writer.write)
-      .toHaveBeenCalledTimes(1);
+    expect(deps.writer.write).toHaveBeenCalledTimes(1);
   });
 
   it("does not write clean tweets", async () => {
@@ -91,8 +94,7 @@ describe("AuditProcessor", () => {
 
     await processor.run();
 
-    expect(deps.writer.write)
-      .not.toHaveBeenCalled();
+    expect(deps.writer.write).not.toHaveBeenCalled();
   });
 
   it("saves checkpoint", async () => {
@@ -110,8 +112,7 @@ describe("AuditProcessor", () => {
 
     await processor.run();
 
-    expect(deps.checkpoint.save)
-      .toHaveBeenCalled();
+    expect(deps.checkpoint.save).toHaveBeenCalled();
   });
 
   it("clears checkpoint after successful audit", async () => {
@@ -129,8 +130,7 @@ describe("AuditProcessor", () => {
 
     await processor.run();
 
-    expect(deps.checkpoint.clear)
-      .toHaveBeenCalledTimes(1);
+    expect(deps.checkpoint.clear).toHaveBeenCalledTimes(1);
   });
 
   it("continues when AI throws", async () => {
@@ -152,8 +152,7 @@ describe("AuditProcessor", () => {
 
     await processor.run();
 
-    expect(deps.logger.error)
-      .toHaveBeenCalled();
+    expect(deps.logger.error).toHaveBeenCalled();
   });
 
   it("resumes from checkpoint", async () => {
@@ -202,7 +201,6 @@ describe("AuditProcessor", () => {
 
     await processor.run();
 
-    expect(deps.ai.analyze)
-      .toHaveBeenCalledTimes(1);
+    expect(deps.ai.analyze).toHaveBeenCalledTimes(1);
   });
 });

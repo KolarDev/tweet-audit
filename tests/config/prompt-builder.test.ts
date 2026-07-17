@@ -12,6 +12,10 @@ describe("PromptBuilder", () => {
         excludePolitics: true,
         tone: "professional",
       },
+      processing: {
+        requestsPerSecond: 20,
+        checkpointInterval: 50,
+      },
     };
 
     const prompt = builder.build(
