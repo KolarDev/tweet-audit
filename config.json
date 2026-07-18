@@ -1,0 +1,17 @@
+{
+  "criteria": {
+    "forbiddenWords": [
+      "crypto",
+      "NFT",
+      "hustlegrindset"
+    ],
+    "professionalCheck": true,
+    "excludePolitics": true,
+    "tone": "respectful and thoughtful"
+  },
+
+  "processing": {
+    "requestsPerSecond": 10,
+    "checkpointInterval": 10
+  }
+}
