@@ -123,7 +123,7 @@ tweet-audit/
 Clone the repository.
 
 ```bash
-git clone https://github.com/yourusername/tweet-audit.git
+git clone https://github.com/KolarDev/tweet-audit.git 
 
 cd tweet-audit
 ```
