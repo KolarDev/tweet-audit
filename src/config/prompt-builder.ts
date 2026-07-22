@@ -1,11 +1,14 @@
 import { AuditConfig } from "../types/config";
 
 export class PromptBuilder {
-  build(tweet: string, config: AuditConfig): string {
+  build(
+    tweet: string,
+    config: AuditConfig
+  ): string {
     return `
-You are evaluating tweets.
+You are reviewing tweets for a professional public profile.
 
-Criteria:
+Evaluate the tweet using the following criteria.
 
 Forbidden words:
 ${config.criteria.forbiddenWords.join(", ")}
@@ -19,12 +22,9 @@ ${config.criteria.excludePolitics}
 Desired tone:
 ${config.criteria.tone}
 
-Return ONLY JSON.
+Flag the tweet only if it violates one or more of the criteria above.
 
-{
-  "flag": true,
-  "reason": "..."
-}
+If the tweet should be flagged, provide a concise reason explaining why.
 
 Tweet:
 

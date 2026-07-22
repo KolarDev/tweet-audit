@@ -12,6 +12,15 @@ export class GeminiRateLimitError extends AppError {
   }
 }
 
+export class GeminiUnavailableError extends AppError {
+  constructor() {
+    super(
+      "Gemini is temporarily unavailable.",
+      true
+    );
+  }
+}
+
 export class GeminiAuthenticationError extends AppError {
   constructor() {
     super("Invalid Gemini API key.", false);
